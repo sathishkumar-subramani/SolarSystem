@@ -3,7 +3,7 @@ import * as THREE from 'three'
 import { useFrame } from '@react-three/fiber'
 import { useGLTF } from '@react-three/drei'
 import { rt } from '../tour/runtime'
-import { SHIP_URL } from './assets'
+import { SHIP_URL, guardNaN, repairTangents } from './assets'
 import { OUTPUT } from '../shaders/common'
 
 const SHIP_LENGTH = 0.66
@@ -40,6 +40,8 @@ export function Ship() {
       const m = o as THREE.Mesh
       if (!m.isMesh) return
       const mat = m.material as THREE.MeshStandardMaterial
+      repairTangents(m.geometry)
+      guardNaN(mat, 3)
       mat.envMapIntensity = 1.5
       mat.metalness = 0.72
       mat.side = THREE.FrontSide
@@ -67,7 +69,7 @@ export function Ship() {
             float y = vUv.y / len;
             float core = exp(-y * 4.5);
             float flicker = 0.9 + 0.1 * sin(uTime * 47.0 + y * 30.0) * sin(uTime * 31.0);
-            float edge = pow(sin(vUv.x * 3.14159), 1.5);   // brighter where the cone faces us
+            float edge = pow(max(sin(vUv.x * 3.14159), 0.0), 1.5);   // brighter where the cone faces us
             vec3 col = mix(vec3(0.35, 0.6, 1.0), vec3(0.9, 0.97, 1.0), core);
             float a = core * (1.0 - smoothstep(0.75, 1.0, y)) * flicker * (0.35 + 0.65 * edge);
             gl_FragColor = vec4(col * a * (0.7 + 2.6 * uPower), 1.0);

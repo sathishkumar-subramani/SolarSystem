@@ -13,6 +13,7 @@ import { Effects } from './Effects'
 import { LabelProjector } from './LabelProjector'
 import { OrbitLines } from './OrbitLines'
 import { Planet } from './Planet'
+import { RenderGuard } from './RenderGuard'
 import { Ship } from './Ship'
 import { Starfield } from './Starfield'
 import { Sun } from './Sun'
@@ -58,11 +59,11 @@ function SolarSystem() {
   )
 }
 
-export function Experience({ dpr, onDecline, onIncline, multisampling }: { dpr: number; multisampling: number; onDecline: () => void; onIncline: () => void }) {
+export function Experience({ dpr, onDecline, onIncline, multisampling, safe }: { dpr: number; multisampling: number; safe: boolean; onDecline: () => void; onIncline: () => void }) {
   return (
     <Canvas
       className="stage"
-      flat
+      flat={!safe}
       dpr={dpr}
       gl={{ antialias: false, powerPreference: 'high-performance', alpha: false, stencil: false, depth: true }}
       camera={{ fov: 40, near: 0.05, far: 40000, position: [0, 500, 5000] }}
@@ -90,7 +91,9 @@ export function Experience({ dpr, onDecline, onIncline, multisampling }: { dpr: 
         <Warmup />
       </Suspense>
       <LabelProjector />
-      <Effects multisampling={multisampling} />
+      <RenderGuard />
+      {/* compatibility mode: no HDR chain — three.js tone-maps straight to the screen instead */}
+      {!safe && <Effects multisampling={multisampling} />}
     </Canvas>
   )
 }

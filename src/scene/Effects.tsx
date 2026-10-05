@@ -1,9 +1,10 @@
 import { useMemo, useRef } from 'react'
 import * as THREE from 'three'
 import { useFrame } from '@react-three/fiber'
-import { Bloom, ChromaticAberration, EffectComposer, Noise, ToneMapping, Vignette } from '@react-three/postprocessing'
+import { Bloom, BrightnessContrast, ChromaticAberration, EffectComposer, Noise, ToneMapping, Vignette } from '@react-three/postprocessing'
 import { BlendFunction, ToneMappingMode } from 'postprocessing'
 import { rt } from '../tour/runtime'
+import { SIMULATE } from './RenderGuard'
 
 /** Lens: HDR bloom, a hint of chromatic fringing at speed, film grain, vignette, filmic tone curve. */
 export function Effects({ multisampling }: { multisampling: number }) {
@@ -20,6 +21,7 @@ export function Effects({ multisampling }: { multisampling: number }) {
       <ToneMapping mode={ToneMappingMode.ACES_FILMIC} />
       <Noise blendFunction={BlendFunction.OVERLAY} opacity={0.1} />
       <Vignette offset={0.28} darkness={0.62} />
+      {SIMULATE ? <BrightnessContrast brightness={-1} contrast={0} /> : <></>}
     </EffectComposer>
   )
 }

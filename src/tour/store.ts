@@ -1,5 +1,8 @@
 import { create } from 'zustand'
 
+/** what the render watchdog found, if anything */
+export type Diag = { kind: 'lost' | 'blank' | 'compat' | 'shader'; details: string }
+
 export type HudState = {
   ready: boolean
   /** shaders compiled */
@@ -15,6 +18,9 @@ export type HudState = {
   /** true while the ray-traced black hole is on screen (render resolution is capped) */
   heavy: boolean
   autoplay: boolean
+  /** 0 = full pipeline, 1 = compatibility mode (no HDR post-processing) */
+  safe: number
+  diag: Diag | null
   set: (p: Partial<HudState>) => void
 }
 
@@ -28,5 +34,7 @@ export const useHud = create<HudState>((set) => ({
   labels: true,
   heavy: false,
   autoplay: false,
+  safe: 0,
+  diag: null,
   set: (p) => set(p),
 }))

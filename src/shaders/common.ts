@@ -23,7 +23,7 @@ float fbm3(vec3 p){
 
 export const EQUIRECT = /* glsl */ `
 vec2 dirToEquirect(vec3 d){
-  return vec2(atan(d.z, d.x) * 0.15915494 + 0.5, asin(clamp(d.y, -1.0, 1.0)) * 0.31830989 + 0.5);
+  return vec2(atan(d.z, abs(d.x) < 1e-7 ? 1e-7 : d.x) * 0.15915494 + 0.5, asin(clamp(d.y, -1.0, 1.0)) * 0.31830989 + 0.5);
 }
 `
 
@@ -95,11 +95,18 @@ vec3 blackbody(float t){
   vec3 XYZ = vec3(x / y, 1.0, z / y);
   vec3 rgb = mat3(3.2404542, -0.9692660, 0.0556434, -1.5371385, 1.8760108, -0.2040259, -0.4985314, 0.0415560, 1.0572252) * XYZ;
   rgb = max(rgb, vec3(0.0));
-  return rgb / max(max(rgb.r, rgb.g), rgb.b);
+  return rgb / max(max(max(rgb.r, rgb.g), rgb.b), 1e-4);
 }
 `
 
+/**
+ * Every custom fragment shader ends with this. The first two lines matter more than they look:
+ * the frame is rendered in HDR and then blurred for the bloom, and that blur spreads a single
+ * NaN or infinite pixel across the whole screen — so none is ever allowed out of a shader.
+ */
 export const OUTPUT = /* glsl */ `
+  if (isnan(gl_FragColor.r) || isnan(gl_FragColor.g) || isnan(gl_FragColor.b) || isnan(gl_FragColor.a)) gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
+  gl_FragColor.rgb = clamp(gl_FragColor.rgb, 0.0, 64.0);
   #include <tonemapping_fragment>
   #include <colorspace_fragment>
 `

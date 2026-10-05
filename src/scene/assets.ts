@@ -134,3 +134,62 @@ export function getStarTexture() {
   starTex.generateMipmaps = false
   return starTex
 }
+
+/**
+ * Built-in three.js materials (the ship, the rocks) get the same protection as the custom shaders.
+ *
+ * Polished metal under a point-like sun produces specular peaks far above 65,504 — the largest value
+ * a half-float HDR buffer can hold. Such a pixel is stored as +infinity, and the bloom blur then turns
+ * it into NaN (inf − inf) and spreads it over the whole frame: a black screen on real GPUs. So the
+ * output is clamped to `max`, and any NaN is replaced with black.
+ */
+export function guardNaN<T extends THREE.Material>(material: T, max = 64): T {
+  const NAN_GUARD = /* glsl */ `
+  if (isnan(gl_FragColor.r) || isnan(gl_FragColor.g) || isnan(gl_FragColor.b) || isnan(gl_FragColor.a)) gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
+  gl_FragColor.rgb = clamp(gl_FragColor.rgb, 0.0, ${max.toFixed(1)});
+`
+  if (material.userData.nanGuard) return material
+  material.userData.nanGuard = true
+  const previous = material.onBeforeCompile
+  material.onBeforeCompile = (shader, renderer) => {
+    previous?.call(material, shader, renderer)
+    shader.fragmentShader = shader.fragmentShader.replace('#include <dithering_fragment>', `#include <dithering_fragment>\n${NAN_GUARD}`)
+  }
+  const key = material.customProgramCacheKey?.bind(material)
+  material.customProgramCacheKey = () => `${key ? key() : ''}|nan-guard-${max}`
+  material.needsUpdate = true
+  return material
+}
+
+/**
+ * Blender's glTF exporter writes a zero-length tangent for vertices whose UV triangle is degenerate.
+ * Normalising that on the GPU gives NaN, so any such tangent is replaced by one perpendicular to the normal.
+ */
+export function repairTangents(geometry: THREE.BufferGeometry) {
+  if (geometry.userData.tangentsChecked) return 0
+  geometry.userData.tangentsChecked = true
+  const t = geometry.getAttribute('tangent') as THREE.BufferAttribute | undefined
+  const n = geometry.getAttribute('normal') as THREE.BufferAttribute | undefined
+  if (!t || !n) return 0
+  const nv = new THREE.Vector3()
+  const tv = new THREE.Vector3()
+  const axis = new THREE.Vector3()
+  let fixed = 0
+  for (let i = 0; i < t.count; i++) {
+    tv.set(t.getX(i), t.getY(i), t.getZ(i))
+    const w = t.getW(i)
+    const ok = Number.isFinite(tv.x + tv.y + tv.z) && tv.lengthSq() > 1e-10
+    if (ok && Math.abs(w) > 0.5) continue
+    if (!ok) {
+      nv.set(n.getX(i), n.getY(i), n.getZ(i))
+      if (!(nv.lengthSq() > 1e-10)) nv.set(0, 1, 0)
+      nv.normalize()
+      axis.set(Math.abs(nv.x) < 0.9 ? 1 : 0, Math.abs(nv.x) < 0.9 ? 0 : 1, 0)
+      tv.crossVectors(axis, nv).normalize()
+    }
+    t.setXYZW(i, tv.x, tv.y, tv.z, Math.abs(w) > 0.5 ? w : 1)
+    fixed++
+  }
+  if (fixed) t.needsUpdate = true
+  return fixed
+}

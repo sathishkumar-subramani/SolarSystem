@@ -46,7 +46,7 @@ export function Tunnel() {
             float cr = cos(roll), sr = sin(roll);
             vec2 q = vec2(cr * rd.x - sr * rd.y, sr * rd.x + cr * rd.y);
             float rxy = max(length(q), 1e-4);
-            float phi = atan(q.y, q.x);
+            float phi = atan(q.y, abs(q.x) < 1e-6 ? 1e-6 : q.x);
             // the walls breathe: the cross-section is never a perfect circle
             float wob = 1.0 + 0.14 * sin(phi * 2.0 + uTime * 0.31 + uU * 5.0) + 0.08 * sin(phi * 3.0 - uTime * 0.23);
             float s = (-rd.z / rxy) * wob;          // distance down the tube where this ray meets the wall
@@ -54,7 +54,7 @@ export function Tunnel() {
 
             // far mouth: a point of light that opens until it is the whole sky
             float open = clamp((uU - 0.05) / 0.9, 0.0, 1.0);
-            float Lexit = 46.0 * pow(1.0 - open, 2.2) + 0.02;
+            float Lexit = 46.0 * pow(max(1.0 - open, 0.0), 2.2) + 0.02;
             float thetaM = atan(1.0, Lexit);
             float travel = uU * 150.0 + uTime * 2.4;
 
@@ -73,7 +73,7 @@ export function Tunnel() {
             vec3 wall = st * tint * 3.2;
             wall += tint * (pow(fold, 3.0) * 0.22 + pow(fold2, 5.0) * 0.3) + smear * 0.5 * (1.0 - along);
             // grazing rays look down a long column of wall: denser light towards the vanishing point
-            wall *= 0.55 + 1.5 * smoothstep(0.9, 0.04, theta);
+            wall *= 0.55 + 1.5 * (1.0 - smoothstep(0.04, 0.9, theta));
             // light spilling in around the exit
             float halo = exp(-max(theta - thetaM, 0.0) / (0.05 + 0.45 * thetaM));
             wall += vec3(1.0, 0.9, 0.78) * halo * 0.4 * (0.4 + open);
@@ -85,10 +85,11 @@ export function Tunnel() {
             // undo the roll so the far sky lines up with the real one at the end
             dv.xy = vec2(cr * dv.x + sr * dv.y, -sr * dv.x + cr * dv.y);
             vec3 sky = destSky(uCamRot * dv) * mix(2.2, 1.0, open);
-            float inside = smoothstep(thetaM * 1.03, thetaM * 0.95, theta);
+            float inside = 1.0 - smoothstep(thetaM * 0.95, thetaM * 1.03, theta);
             vec3 col = mix(wall, sky, inside);
             // bright rim of the mouth
-            col += vec3(0.85, 0.92, 1.0) * exp(-pow((theta - thetaM) / (0.012 + 0.03 * thetaM), 2.0)) * 0.8 * (1.0 - open * open);
+            float rim = (theta - thetaM) / (0.012 + 0.03 * thetaM);
+            col += vec3(0.85, 0.92, 1.0) * exp(-rim * rim) * 0.8 * (1.0 - open * open);
             // entering: a wash of light
             col += vec3(0.7, 0.82, 1.0) * (1.0 - smoothstep(0.0, 0.1, uU)) * 0.22;
             gl_FragColor = vec4(col, uAlpha);

@@ -56,7 +56,7 @@ export function BlackHole() {
           vec4 disk(vec3 hit, vec3 v){
             float r = length(hit.xz);
             if (r < R_IN * 0.86 || r > R_OUT) return vec4(0.0);
-            float ang = atan(hit.z, hit.x);
+            float ang = atan(hit.z, abs(hit.x) < 1e-6 ? 1e-6 : hit.x);
             // flow animation without ever winding up: two phases cross-faded
             float T = uTime * 0.045;
             float f1 = fract(T), f2 = fract(T + 0.5);

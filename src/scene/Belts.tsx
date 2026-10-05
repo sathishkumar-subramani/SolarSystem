@@ -3,7 +3,7 @@ import * as THREE from 'three'
 import { useFrame } from '@react-three/fiber'
 import { rt } from '../tour/runtime'
 import { SEGS, WORMHOLE_POS, evalSeg } from '../tour/timeline'
-import { makeRockGeometry, mulberry32 } from './assets'
+import { guardNaN, makeRockGeometry, mulberry32 } from './assets'
 
 type BeltProps = { count: number; inner: number; outer: number; thickness: number; size: [number, number]; color: string; seed: number; clearWormhole?: boolean }
 
@@ -25,7 +25,7 @@ const pathSamples = (() => {
 function Belt({ count, inner, outer, thickness, size, color, seed, clearWormhole }: BeltProps) {
   const ref = useRef<THREE.InstancedMesh>(null)
   const geo = useMemo(() => makeRockGeometry(seed, 1), [seed])
-  const mat = useMemo(() => new THREE.MeshStandardMaterial({ color, roughness: 1, metalness: 0, flatShading: true }), [color])
+  const mat = useMemo(() => guardNaN(new THREE.MeshStandardMaterial({ color, roughness: 1, metalness: 0, flatShading: true })), [color])
 
   useLayoutEffect(() => {
     const mesh = ref.current

@@ -45,7 +45,7 @@ export function Dust() {
             p -= uStreak * aEnd;
             vec4 mv = viewMatrix * vec4(p, 1.0);
             float d = length(mv.xyz);
-            vFade = smoothstep(uBox * 0.5, uBox * 0.2, d) * smoothstep(1.5, 6.0, d) * (1.0 - aEnd * 0.85);
+            vFade = (1.0 - smoothstep(uBox * 0.2, uBox * 0.5, d)) * smoothstep(1.5, 6.0, d) * (1.0 - aEnd * 0.85);
             gl_Position = projectionMatrix * mv;
           }`,
         fragmentShader: /* glsl */ `

@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { BLACKHOLE, BODIES, MOON_TALLY_DATE, PLANETS, TOTAL_MOONS, WORMHOLE, displayToAU, type BodyDef } from '../data/bodies'
 import { labelEls } from '../scene/LabelProjector'
 import { rt } from '../tour/runtime'
@@ -37,7 +37,72 @@ export function Hud() {
       <Outro />
       <LabelLayer />
       <ProgressRail />
+      <DiagPanel />
     </div>
+  )
+}
+
+// ------------------------------------------------------------------ render diagnostics
+const DIAG_TEXT = {
+  lost: {
+    title: 'Graphics context lost',
+    body: 'The browser took the GPU away from this page — usually a driver reset or the GPU running out of memory. The tour resumes by itself if the context comes back; otherwise reload the page.',
+  },
+  blank: {
+    title: 'Nothing is being drawn',
+    body: 'WebGL is running, but on this GPU every frame comes out black, even in compatibility mode. Check that hardware acceleration is on (chrome://settings/system), update the graphics driver, or try another browser.',
+  },
+  compat: {
+    title: 'Compatibility mode',
+    body: 'The HDR / bloom pipeline produced black frames on this GPU, so it was switched off. Everything still works, without the glow.',
+  },
+  shader: {
+    title: 'A shader failed to compile',
+    body: 'Part of the scene may be missing on this GPU.',
+  },
+} as const
+
+/** Shown only when the render watchdog found a problem; says what it is instead of leaving a black screen. */
+function DiagPanel() {
+  const diag = useHud((s) => s.diag)
+  const set = useHud((s) => s.set)
+  const [copied, setCopied] = useState(false)
+  const [open, setOpen] = useState(false)
+  if (!diag) return null
+  const t = DIAG_TEXT[diag.kind]
+  const big = diag.kind === 'lost' || diag.kind === 'blank'
+  const copy = () => {
+    navigator.clipboard?.writeText(`${t.title}\n${diag.details}`).then(
+      () => setCopied(true),
+      () => setOpen(true),
+    )
+  }
+  return (
+    <aside className={`diag ${big ? 'big' : 'toast'}`} role="alert">
+      <p className="eyebrow">Renderer</p>
+      <h3>{t.title}</h3>
+      <p>{t.body}</p>
+      {(big || open) && <pre>{diag.details}</pre>}
+      <div className="diag-actions">
+        <button className="chip" onClick={copy}>
+          {copied ? 'Copied' : 'Copy details'}
+        </button>
+        {!big && (
+          <button className="chip" onClick={() => setOpen((o) => !o)}>
+            {open ? 'Hide details' : 'Details'}
+          </button>
+        )}
+        {big ? (
+          <button className="chip on" onClick={() => location.reload()}>
+            Reload
+          </button>
+        ) : (
+          <button className="chip" onClick={() => set({ diag: null })}>
+            Dismiss
+          </button>
+        )}
+      </div>
+    </aside>
   )
 }
 

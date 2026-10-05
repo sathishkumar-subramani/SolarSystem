@@ -767,6 +767,62 @@ ol {
   display: none;
 }
 
+/* ---------------------------------------------------------------- render diagnostics */
+.diag {
+  position: absolute;
+  pointer-events: auto;
+  z-index: 5;
+  padding: 18px 20px;
+  border: 1px solid var(--faint);
+  border-radius: 10px;
+  background: rgba(8, 10, 14, 0.9);
+  backdrop-filter: blur(10px);
+  font-size: 13px;
+  color: #c6ccd9;
+}
+.diag.toast {
+  right: var(--gutter);
+  bottom: clamp(88px, 13vh, 130px);
+  width: min(380px, calc(100vw - var(--gutter) * 2));
+}
+.diag.big {
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: min(620px, calc(100vw - var(--gutter) * 2));
+  border-color: rgba(255, 190, 120, 0.45);
+}
+.diag h3 {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #fff;
+  margin: 8px 0 8px;
+}
+.diag pre {
+  margin: 12px 0 0;
+  padding: 10px 12px;
+  max-height: 34vh;
+  overflow: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  line-height: 1.55;
+  color: #aab3c5;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 6px;
+  user-select: text;
+}
+.diag-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+}
+
 /* ---------------------------------------------------------------- loader */
 .loader {
   position: fixed;

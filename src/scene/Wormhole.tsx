@@ -51,7 +51,7 @@ export function Wormhole() {
           ${DEST_SKY}
           vec3 homeSky(vec3 d){
             vec2 uv = dirToEquirect(d);
-            vec3 c = pow(textureLod(uMilky, uv, 0.0).rgb, vec3(0.92)) * 0.5;
+            vec3 c = pow(max(textureLod(uMilky, uv, 0.0).rgb, vec3(1e-5)), vec3(0.92)) * 0.5;
             return c + textureLod(uStarTex, vec2(uv.x + 0.5, uv.y), 0.0).rgb * 0.9;
           }
           void main(){
@@ -85,7 +85,8 @@ export function Wormhole() {
               alpha = 1.0 - smoothstep(1.25, uShell, b);
             }
             // photon ring at the throat's edge
-            col += vec3(0.75, 0.86, 1.0) * exp(-pow((b - 1.0) / 0.009, 2.0)) * 0.5;
+            float ring = (b - 1.0) / 0.009;
+            col += vec3(0.75, 0.86, 1.0) * exp(-ring * ring) * 0.5;
             gl_FragColor = vec4(col, alpha * uFade);
             ${OUTPUT}
           }`,

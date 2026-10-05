@@ -79,7 +79,7 @@ export function Starfield() {
           varying vec3 vColor;
           void main(){
             float d = length(gl_PointCoord - 0.5) * 2.0;
-            float a = smoothstep(1.0, 0.1, d);
+            float a = 1.0 - smoothstep(0.1, 1.0, d);
             gl_FragColor = vec4(vColor * a * a * uFade, 1.0);
             ${OUTPUT}
           }`,
@@ -105,7 +105,7 @@ export function Starfield() {
           void main(){
             vec3 c = texture2D(uMap, vUv).rgb;
             // lift the faint dust lanes a little, keep the blacks black
-            c = pow(c, vec3(0.92)) * uGain;
+            c = pow(max(c, vec3(1e-5)), vec3(0.92)) * uGain;
             gl_FragColor = vec4(c, 1.0);
             ${OUTPUT}
           }`,

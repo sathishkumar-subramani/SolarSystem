@@ -1,10 +1,10 @@
-import { useMemo, useRef } from 'react'
+import { useLayoutEffect, useMemo, useRef } from 'react'
 import * as THREE from 'three'
 import { useFrame } from '@react-three/fiber'
 import { moonDisplayRadius, orbitDisplay, visualPeriod, type BodyDef, type MoonDef } from '../data/bodies'
 import { PLANET_POS, SEG_BY_KEY } from '../tour/timeline'
 import { rt } from '../tour/runtime'
-import { labelSlot, makeRockGeometry, mulberry32, useColorMap, useDataMap } from './assets'
+import { guardNaN, labelSlot, makeRockGeometry, mulberry32, useColorMap, useDataMap } from './assets'
 import { ATMO_EXTENT, makeAtmosphereMaterial, makeBodyMaterial, makeProceduralRingTexture, makeRingMaterial } from './materials'
 
 const UP = new THREE.Vector3(0, 1, 0)
@@ -151,7 +151,7 @@ export function Planet({ body }: { body: BodyDef }) {
   }, [body, R])
 
   const rockGeo = useMemo(() => makeRockGeometry(body.name.length * 31 + 7), [body])
-  const rockMat = useMemo(() => new THREE.MeshStandardMaterial({ color: '#8d8782', roughness: 1, metalness: 0 }), [])
+  const rockMat = useMemo(() => guardNaN(new THREE.MeshStandardMaterial({ color: '#8d8782', roughness: 1, metalness: 0 })), [])
 
   const spinRef = useRef<THREE.Mesh>(null)
   const tiltRef = useRef<THREE.Group>(null)
@@ -179,6 +179,13 @@ export function Planet({ body }: { body: BodyDef }) {
     }
     mesh.instanceMatrix.needsUpdate = true
   }
+
+  // instanced meshes start with all-zero matrices: give every rock a valid place before the first frame
+  useLayoutEffect(() => {
+    placeRocks(regRef.current, regular, 0)
+    placeRocks(irrRef.current, irregular, 0)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [regular, irregular])
 
   useFrame((state, dt) => {
     if (!rt.solar) return

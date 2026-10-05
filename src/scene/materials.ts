@@ -66,7 +66,8 @@ vec3 perturb(vec3 N, vec3 P, vec2 dH){
   vec3 r2 = cross(N, sx);
   float det = dot(sx, r1);
   vec3 grad = sign(det) * (dH.x * r1 + dH.y * r2);
-  return normalize(abs(det) * N - grad);
+  vec3 n = abs(det) * N - grad;
+  return dot(n, n) > 1e-24 ? normalize(n) : N;
 }
 #ifdef USE_EARTH
 float earthHeight(vec2 uv, vec2 shift){
@@ -137,7 +138,7 @@ void main(){
   #ifdef USE_EARTH
     // oceans glint, land does not
     float ocean = 1.0 - smoothstep(0.28, 0.5, brc.g);
-    vec3 H = normalize(L + V);
+    vec3 H = normalize(L + V + vec3(0.0, 1e-5, 0.0));
     float spec = pow(max(dot(N, H), 0.0), 90.0) * ocean * (1.0 - clouds) * step(0.0, ndlG);
     col += vec3(1.0, 0.92, 0.78) * spec * 0.9 * shadow * uSunIntensity;
     // cloud deck
@@ -151,7 +152,7 @@ void main(){
   #endif
 
   // light scattered by the atmosphere, strongest along the limb
-  float fres = pow(1.0 - max(dot(Ng, V), 0.0), 3.2);
+  float fres = pow(clamp(1.0 - dot(Ng, V), 0.0, 1.0), 3.2);
   float dayWide = smoothstep(-0.28, 0.42, ndlG);
   col += uAtmoColor * uAtmoRim * (fres * 0.85 + 0.05) * dayWide * shadow * uSunIntensity;
   // warm band where the sun is on the horizon
@@ -246,7 +247,7 @@ void main(){
   // exponential falloff above the limb, thin haze over the disc just inside it
   float a = h >= 0.0 ? exp(-h) - 0.0025 : pow(clamp(b / uRadius, 0.0, 1.0), 9.0);
   a = max(a, 0.0);
-  vec3 n = normalize(closest);
+  vec3 n = b > 1e-6 ? closest / b : -rd;
   vec3 L = normalize(uSunPos - uCenter);
   float sun = dot(n, L);
   float lit = smoothstep(-0.38, 0.5, sun);
@@ -338,7 +339,7 @@ void main(){
   float disc = ob * ob - (dot(oc, oc) - uPlanetRadius * uPlanetRadius);
   float shadow = 1.0;
   if (ob < 0.0 && disc > 0.0) shadow = 1.0 - 0.985 * smoothstep(0.0, uPlanetRadius * uPlanetRadius * 0.035, disc);
-  float edge = smoothstep(0.0, 0.006, u) * smoothstep(1.0, 0.994, u);
+  float edge = smoothstep(0.0, 0.006, u) * (1.0 - smoothstep(0.994, 1.0, u));
   vec3 ice = mix(vec3(dot(tex.rgb, vec3(0.333))), tex.rgb, 0.8);
   gl_FragColor = vec4(ice * lightAmt * shadow * uSunIntensity * 0.74, density * uOpacity * edge);
   ${OUTPUT}
@@ -433,7 +434,7 @@ void main(){
   // limb darkening: the edge of the disc is cooler and redder
   vec3 V = normalize(cameraPosition - vWorldPos);
   float mu = max(dot(normalize(vWorldNormal), V), 0.0);
-  col *= 0.34 + 0.66 * pow(mu, 0.6);
+  col *= 0.34 + 0.66 * pow(max(mu, 1e-4), 0.6);
   col = mix(col * vec3(1.0, 0.55, 0.25), col, smoothstep(0.0, 0.6, mu));
   gl_FragColor = vec4(col * uIntensity, 1.0);
   ${OUTPUT}
@@ -480,7 +481,7 @@ void main(){
   float inner = exp(-d * 11.0) * 1.3;                 // chromosphere rim
   float mid = pow(1.0 / r, 3.6) * 0.42 * streamer;    // K-corona
   float far = pow(1.0 / r, 2.0) * 0.022;               // soft outer glow
-  float fade = smoothstep(uExtent, uExtent * 0.55, r);
+  float fade = 1.0 - smoothstep(uExtent * 0.55, uExtent, r);
   vec3 col = vec3(1.0, 0.62, 0.3) * inner + vec3(1.0, 0.86, 0.66) * mid + vec3(1.0, 0.8, 0.6) * far;
   gl_FragColor = vec4(col * fade * uStrength, 1.0);
   ${OUTPUT}

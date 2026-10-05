@@ -68,6 +68,12 @@ src/ui/Hud.tsx                panels, telemetry, labels, progress rail
 
 The renderer watches the frame rate and moves between four quality tiers (resolution 0.75×–1.5×, MSAA 0–4×). The black hole is capped at 1× resolution. All shaders are compiled during the loading screen so nothing stutters mid-flight.
 
+## If the screen stays black
+
+The page checks its own output on your GPU. If the HDR/bloom chain produces black frames it switches itself to a compatibility mode (same scene, no glow) and says so; if nothing can be drawn at all, a "Renderer" panel appears with the GPU name, WebGL capabilities and any shader or script error — use **Copy details** to share it. `?safe=1` forces compatibility mode.
+
+Things that most often cause it: hardware acceleration switched off in the browser (`chrome://settings/system`), an outdated graphics driver, or a `NaN` reaching the bloom blur — every shader here clamps its output for that reason, and `Ship.tsx` repairs the zero-length tangents that Blender's glTF exporter can write.
+
 ## Credits
 
 * Planet and moon maps are derived from NASA / JPL-Caltech / USGS / ESO imagery, via Solar System Scope (CC BY 4.0), Planet Pixel Emporium, the three.js examples and Stellarium.

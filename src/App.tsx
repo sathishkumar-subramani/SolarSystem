@@ -28,10 +28,11 @@ export function App() {
   const q = TIERS[tier]
   // the black hole traces ~150 light-path steps per pixel: keep it at 1x resolution at most
   const heavy = useHud((s) => s.heavy)
+  const safe = useHud((s) => s.safe) > 0
   const dpr = Math.min(heavy ? Math.min(q.dpr, 1) : q.dpr, window.devicePixelRatio || 1)
   return (
     <>
-      <Experience dpr={dpr} multisampling={q.msaa} onDecline={onDecline} onIncline={onIncline} />
+      <Experience dpr={dpr} safe={safe} multisampling={q.msaa} onDecline={onDecline} onIncline={onIncline} />
       <Hud />
       <Loader />
       {/* the page is only a scroll track; everything visible is fixed on top of it */}
