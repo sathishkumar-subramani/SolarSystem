@@ -190,6 +190,94 @@ ol {
   border-color: #fff;
 }
 
+/* the little level meter on the sound controls */
+.chip.sound,
+.sound-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+}
+.chip.sound i,
+.sound-cta i {
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 10px;
+}
+.chip.sound i b,
+.sound-cta i b {
+  width: 2px;
+  height: 100%;
+  background: currentColor;
+  transform-origin: 50% 100%;
+  transform: scaleY(0.25);
+  transition: transform 0.3s;
+}
+.chip.sound.on i b,
+.sound-cta.on i b {
+  animation: meter 1.5s ease-in-out infinite;
+}
+.chip.sound i b:nth-child(2),
+.sound-cta i b:nth-child(2) {
+  animation-delay: -0.55s;
+  animation-duration: 1.15s;
+}
+.chip.sound i b:nth-child(3),
+.sound-cta i b:nth-child(3) {
+  animation-delay: -0.95s;
+  animation-duration: 1.9s;
+}
+.chip.sound.busy {
+  opacity: 0.7;
+}
+@keyframes meter {
+  0%,
+  100% {
+    transform: scaleY(0.3);
+  }
+  35% {
+    transform: scaleY(1);
+  }
+  70% {
+    transform: scaleY(0.55);
+  }
+}
+.sound-cta {
+  margin-top: 26px;
+  padding: 11px 18px 11px 15px;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.34);
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(6px);
+  transition: color 0.25s, border-color 0.25s, background 0.25s;
+}
+.sound-cta:hover {
+  border-color: #fff;
+  background: rgba(255, 255, 255, 0.1);
+}
+.sound-cta.on {
+  color: var(--dim);
+  border-color: var(--faint);
+}
+.sound-cta em {
+  font-style: normal;
+  color: var(--dim);
+  padding-left: 12px;
+  margin-left: 3px;
+  border-left: 1px solid var(--faint);
+}
+.sound-cta.on em {
+  display: none;
+}
+.intro:not(.on) .sound-cta {
+  pointer-events: none;
+}
+
 /* ---------------------------------------------------------------- intro */
 .intro {
   position: absolute;
@@ -939,6 +1027,19 @@ ol {
   .brand em {
     display: none;
   }
+  .controls {
+    gap: 6px;
+  }
+  .chip {
+    padding: 8px 10px;
+    letter-spacing: 0.12em;
+  }
+  .sound-cta {
+    margin-top: 20px;
+  }
+  .sound-cta em {
+    display: none;
+  }
   .panel,
   .panel.right,
   .body-panel,
@@ -996,6 +1097,11 @@ ol {
   }
 }
 @media (prefers-reduced-motion: reduce) {
+  .chip.sound.on i b,
+  .sound-cta.on i b {
+    animation: none;
+    transform: scaleY(0.8);
+  }
   .panel,
   .tab-pane,
   .intro,

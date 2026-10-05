@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import { armSound } from './audio/sound'
 import { Experience } from './scene/Experience'
 import { SCREEN, startScroll } from './tour/scroll'
 import { useHud } from './tour/store'
@@ -23,7 +24,14 @@ export function App() {
   const onDecline = useCallback(() => setTier((t) => Math.max(0, t - 1)), [])
   const onIncline = useCallback(() => setTier((t) => Math.min(maxTier, t + 1)), [maxTier])
 
-  useEffect(() => startScroll(), [])
+  useEffect(() => {
+    const stopScroll = startScroll()
+    const stopSound = armSound()
+    return () => {
+      stopScroll()
+      stopSound()
+    }
+  }, [])
 
   const q = TIERS[tier]
   // the black hole traces ~150 light-path steps per pixel: keep it at 1x resolution at most

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { BLACKHOLE, BODIES, MOON_TALLY_DATE, PLANETS, TOTAL_MOONS, WORMHOLE, displayToAU, type BodyDef } from '../data/bodies'
+import { toggleSound } from '../audio/sound'
 import { labelEls } from '../scene/LabelProjector'
 import { rt } from '../tour/runtime'
 import { goTo, jumpTo } from '../tour/scroll'
@@ -110,6 +111,7 @@ function DiagPanel() {
 function TopBar() {
   const labels = useHud((s) => s.labels)
   const autoplay = useHud((s) => s.autoplay)
+  const sound = useHud((s) => s.sound)
   const set = useHud((s) => s.set)
   const a = useRef<HTMLSpanElement>(null)
   const b = useRef<HTMLSpanElement>(null)
@@ -165,6 +167,20 @@ function TopBar() {
         </div>
       </div>
       <div className="controls">
+        <button
+          data-sound
+          className={`chip sound ${sound !== 'off' ? 'on' : ''} ${sound === 'loading' ? 'busy' : ''}`}
+          onClick={toggleSound}
+          aria-pressed={sound !== 'off'}
+          title="Sound on / off (M)"
+        >
+          <i aria-hidden>
+            <b />
+            <b />
+            <b />
+          </i>
+          Sound
+        </button>
         <button className={`chip ${labels ? 'on' : ''}`} onClick={() => set({ labels: !labels })} aria-pressed={labels}>
           Labels
         </button>
@@ -179,6 +195,7 @@ function TopBar() {
 // ------------------------------------------------------------------ opening
 function IntroCard() {
   const on = useHud((s) => s.stop === 'intro')
+  const sound = useHud((s) => s.sound)
   return (
     <section className={`intro ${on ? 'on' : ''}`} aria-hidden={!on}>
       <p className="eyebrow">A scroll-driven flight · real-time 3D</p>
@@ -194,6 +211,15 @@ function IntroCard() {
         <span />
         Scroll to launch
       </div>
+      <button data-sound className={`sound-cta ${sound !== 'off' ? 'on' : ''}`} onClick={toggleSound} tabIndex={on ? 0 : -1}>
+        <i aria-hidden>
+          <b />
+          <b />
+          <b />
+        </i>
+        {sound === 'off' ? 'Turn the sound on' : sound === 'loading' ? 'Loading the score…' : 'Sound is on · press M to mute'}
+        <em>Best with headphones</em>
+      </button>
     </section>
   )
 }

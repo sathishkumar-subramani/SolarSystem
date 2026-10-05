@@ -6,6 +6,8 @@ React + Three.js (React Three Fiber). One continuous flight in a chase view behi
 
 Every stop has a details panel (description + facts), and every planet with moons has a second "Moons" tab. All 434 known moons are in the scene: 27 as textured, labelled bodies and the remaining small ones as orbiting rocks.
 
+The flight has a soundtrack that is mixed live from where you are and how fast you are going (see *Sound* below).
+
 ## Run it
 
 ```bash
@@ -27,6 +29,7 @@ Needs Node 20+ and a browser with WebGL 2.
 | Bottom rail | Jump to any stop |
 | Tabs in a panel | Overview ↔ Moons |
 | **Labels** | Show / hide the moon and planet name tags |
+| **Sound** or `M` | Soundtrack on / off (remembered for the next visit) |
 
 Useful while developing: `?t=14.9` opens the tour at that timeline position, `?q=0…3` forces a quality tier, `?shipz=-1.2` pulls the ship close to the camera. `window.__tour` exposes `jumpTo(t)`, `goTo(t)` and the live runtime state.
 
@@ -46,6 +49,9 @@ src/scene/Tunnel.tsx          the transit
 src/scene/BlackHole.tsx       ray-traced Schwarzschild black hole with accretion disc
 src/scene/Ship.tsx            chase rig, banking, engine plume
 src/ui/Hud.tsx                panels, telemetry, labels, progress rail
+public/audio/                 the soundtrack loops (MP3)
+src/audio/sound.ts            the live mix: which loop plays where, engine, turbulence
+tools/render_audio.py         the synthesiser that rendered public/audio
 ```
 
 ### Changing the tour
@@ -54,6 +60,38 @@ src/ui/Hud.tsx                panels, telemetry, labels, progress rail
 * **How long a stop lasts** — the `dwell` values in `src/tour/timeline.ts` (in "screens" of scrolling).
 * **How close the ship passes a planet** — `flyby: { a, b, m, lift }` per body, in planet radii: start distance, end distance, sideways miss distance, height above the orbital plane.
 * **Replacing the ship** — in Blender: `File → Export → glTF 2.0 (.glb)`, save over `public/models/spaceship.glb`. The model is centred and scaled automatically; its nose should point along Blender's −Y axis (the default "front"). The engine glow is placed at the tail in `Ship.tsx` (`nozzle`).
+
+## Sound
+
+Browsers do not allow a page to play audio until the visitor has clicked or pressed a key, so the soundtrack starts with the first click (the **Turn the sound on** button on the opening screen, or anything else). `M` or the **Sound** chip mutes it, and the choice is remembered.
+
+It is not one music file. `public/audio` holds nine short pieces and `src/audio/sound.ts` mixes them from the flight itself:
+
+| File | What it is | When you hear it |
+| --- | --- | --- |
+| `warm` | slow strings, flutes, a felt piano | overview, Sun, Mercury → Mars |
+| `vast` | pipe-organ chords over a low pedal | Jupiter, Saturn |
+| `cold` | glassy tones, distant bells, wind | Uranus, Neptune |
+| `void` | very low drone, an unresolved interval | at the wormhole mouth |
+| `tunnel` | an endlessly rising tone (Shepard–Risset) | the transit |
+| `bh` | choir and organ over a sub-bass | the black hole |
+| `engine` | hull / drive hum | whenever the ship is under way — louder, higher and brighter with speed |
+| `roar` | low turbulence | close to the Sun, in the tunnel, near the accretion disc, at high speed |
+| `arrive` | one soft, deep swell | on reaching a stop |
+
+The music changes hands a little before the half-way point of each leg, with a slow cross-fade. Only the current piece and its neighbours are kept decoded in memory.
+
+**All of it is synthesised** by `tools/render_audio.py` (additive synthesis, filtered noise and a convolution reverb in numpy) — there are no samples and no third-party recordings in it, and nothing from a real spacecraft. Space itself is silent; this is a film score, not a recording. Each loop is built so that it repeats exactly (every frequency completes a whole number of cycles per loop), so there is no click or gap at the loop point.
+
+To change the music, edit the piece in `tools/render_audio.py` and render it again (needs Python with numpy, and ffmpeg):
+
+```bash
+python3 tools/render_audio.py            # everything
+python3 tools/render_audio.py warm bh    # only these pieces
+python3 tools/analyze_audio.py warm      # levels, frequency balance, loop seam, spectrogram
+```
+
+To use your own recordings instead, drop MP3s with the same names into `public/audio` and set their loop lengths in `PERIOD` at the top of `src/audio/sound.ts` (a file must contain one second of lead-in before the loop and one second after it). Levels per piece are in `LEVEL`, the overall volume is `MASTER`.
 
 ## What is real and what is not
 
@@ -79,5 +117,6 @@ Things that most often cause it: hardware acceleration switched off in the brows
 * Planet and moon maps are derived from NASA / JPL-Caltech / USGS / ESO imagery, via Solar System Scope (CC BY 4.0), Planet Pixel Emporium, the three.js examples and Stellarium.
 * Space vehicle: the "SpaceFighter" scene from Blender.
 * Fonts: Syncopate, Inter, JetBrains Mono (SIL Open Font License).
+* Soundtrack: generated for this project by `tools/render_audio.py`; no third-party audio.
 
 Check the texture and model licences before using this commercially.

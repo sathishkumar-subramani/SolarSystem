@@ -21,6 +21,8 @@ export type HudState = {
   /** 0 = full pipeline, 1 = compatibility mode (no HDR post-processing) */
   safe: number
   diag: Diag | null
+  /** soundtrack: off, fetching the first loops, or playing */
+  sound: 'off' | 'loading' | 'on'
   set: (p: Partial<HudState>) => void
 }
 
@@ -36,5 +38,6 @@ export const useHud = create<HudState>((set) => ({
   autoplay: false,
   safe: 0,
   diag: null,
+  sound: 'off',
   set: (p) => set(p),
 }))
